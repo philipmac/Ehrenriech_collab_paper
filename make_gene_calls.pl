@@ -30,9 +30,11 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
 
     while (<IN>){
 	chomp $_;
-	my ($gene,$geneLen,$lens,$starts,$strand) = split /\t/;
-
-	push @{$allGenes{$gene}},$_;
+	my ($plasmid,$geneLoc,$geneLen,$lens,$starts,$strand) = split /\t/;
+	# print "($plasmid,$geneLoc,$geneLen,$lens,$starts,$strand)";
+	# exit;
+	my $gene = "$plasmid,$geneLoc";
+#	push @{$allGenes{$gene}},$_;
 	my @lens = split /,/,$lens;
 	my @starts = split /,/,$starts;
 
@@ -70,8 +72,8 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
     open OUT, ">$outFile" or die $!;
     print OUT join "\n",(keys %genesHit);
     close OUT;
-#    print $outFile,"\n";
-    #last;
+#   print $outFile,"\n";
+#    last;
 }
 
 # print "all: ",scalar (keys %allGenes), "\n";
