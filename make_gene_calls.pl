@@ -10,7 +10,7 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
 
     my (%startHitButTooShort, %endHitButTooShort, %isLongHit);
     my %genesHit;
-    my %allGenes;
+#    my %allGenes;
 
     chomp $file;
     open IN, $file or die $!;
@@ -23,18 +23,14 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
     my $outFile = $file;
     $outFile =~ s/summary/gene_calls/; 
     $outFile .='.csv';
-    # my $outDir = $outFile;
-    # $outDir =~ s/\/Esch_.*//;
-
-    # system "mkdir $outDir" unless -d $outDir;
 
     while (<IN>){
 	chomp $_;
 	my ($plasmid,$geneLoc,$geneLen,$lens,$starts,$strand) = split /\t/;
-	# print "($plasmid,$geneLoc,$geneLen,$lens,$starts,$strand)";
-	# exit;
 	my $gene = "$plasmid,$geneLoc";
-#	push @{$allGenes{$gene}},$_;
+
+#	push @{$allGenes{$gene}},$_; # this is in case you want to do diffs and things with *every* gene.
+
 	my @lens = split /,/,$lens;
 	my @starts = split /,/,$starts;
 
@@ -43,19 +39,17 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
 	# initial $minHitLen or 
 	# ultimate $minHitLen bp
 
-
 	while (my ($index, $start) = each @starts) {
 	    my $end = $start + $lens[$index];
 
 	    if ($lens[$index] < $minHitLen){  # len is less than 90
-		$startHitButTooShort{$gene}=1 if ($start =~ /0|1/);
-		
+		$startHitButTooShort{$gene}=1 if ($start =~ /0|1/);		
 		$endHitButTooShort{$gene}=1 if ($end == $geneLen || ($end == $geneLen-1));
-		next;
 	    }
-
-	    $genesHit{$gene}=1 if ($start =~ /0|1/); # if elt is at start 
-	    $genesHit{$gene}=1 if ($end == $geneLen || ($end == $geneLen-1)); # last elt
+	    else{
+		$genesHit{$gene}=1 if ($start =~ /0|1/); # if elt is at start 
+		$genesHit{$gene}=1 if ($end == $geneLen || ($end == $geneLen-1)); # last elt
+	    }
 	}
 
 	foreach (@lens){
@@ -67,13 +61,12 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
 #	print $gene,"\n" if ($isLongHit{$gene} && ($endHitButTooShort{$gene} || $startHitButTooShort{$gene}));
     }
     close IN;
-    # print "$outFile\n";
-    # exit;
+
+    # dump...
     open OUT, ">$outFile" or die $!;
     print OUT join "\n",(keys %genesHit);
     close OUT;
-#   print $outFile,"\n";
-#    last;
+
 }
 
 # print "all: ",scalar (keys %allGenes), "\n";
