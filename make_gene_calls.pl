@@ -5,9 +5,27 @@ use strict;
 
 my $minHitLen = 90;
 
+my %geneToLocName;
+open IN, "map_withEcoGene" or die $!;
+while (<IN>){
+    #Escherichia_coli_042_uid161985NC_017626336-2798LOCUSTAG: EC042_0001LOCUS: thrASYNS: ECOGENE: EG10998GENEID:
+    my (undef,$plsmd,$location,undef,$locus,$syns,$ecogene,undef)=split /\t/,$_;
+    $locus =~ s/LOCUS:|\s+//g;
+    $syns =~ s/SYNS:|\s+//g;
+    
+    $geneToLocName{"$plsmd,$location"}=$locus;
+    if ($syns ne ''){
+	$geneToLocName{"$plsmd,$location"}.=','.$syns;
+    }    
+}
+close IN;
+
+# foreach (keys %geneToLocName){
+#     print "$_, $geneToLocName{$_},\n";
+# }
+# exit;
 
 foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_coli*`){ # (gene geneLen hitLens hitLocationOnGene strand)
-
     my (%startHitButTooShort, %endHitButTooShort, %isLongHit);
     my %genesHit;
 #    my %allGenes;
@@ -27,6 +45,7 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
     while (<IN>){
 	chomp $_;
 	my ($plasmid,$geneLoc,$geneLen,$lens,$starts,$strand) = split /\t/;
+	$plasmid =~ s/\.\d+//;
 	my $gene = "$plasmid,$geneLoc";
 
 #	push @{$allGenes{$gene}},$_; # this is in case you want to do diffs and things with *every* gene.
@@ -64,9 +83,13 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
 
     # dump...
     open OUT, ">$outFile" or die $!;
-    print OUT join "\n",(keys %genesHit);
+    foreach (keys %genesHit){
+	my $loc='';
+	$loc = $geneToLocName{$_} if defined $geneToLocName{$_};
+	print OUT join "\t", ($_,$loc,"\n");
+    }
     close OUT;
-
+    #print $outFile,"\n";
 }
 
 # print "all: ",scalar (keys %allGenes), "\n";
