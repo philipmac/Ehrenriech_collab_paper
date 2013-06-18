@@ -1,0 +1,10 @@
+
+other/sample_indiv_type.csv is from Ian. I will extend this file with gene count / sp calling data.
+
+=> merge_top_strain_with_indiv_type_data.pl
+does two things: it picks the top counting E coli sp
+     	 	 it merges Ians file with this call. 
+
+all_hits.tgz is a list of all of the genes that each contig set contains (from every NCBI sp).
+
+ lists the top 10 scoring E coli's genes found in every contig set
