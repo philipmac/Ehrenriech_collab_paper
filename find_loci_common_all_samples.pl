@@ -6,20 +6,23 @@ use strict;
 
 
 my %hash;
-my @bests = `ls best_strain`;
-foreach my $best (@bests){    
-    chomp $best;
-    my ($ctg,undef)=split /_31\./,$best;
-    open IN, "best_strain/$best" or die $!;
+my @files = `ls ../ecolireads/*/blat/gene_calls/all_strains.genes_hit`;
+foreach my $file (@files){    
+    chomp $file;
+    my (undef,undef,$ctg,undef)=split /\//,$file;
+    $ctg =~ s/_31//;
+
+    open IN, "$file" or die $!;
     while (<IN>){
-	chomp;
-	my (undef,$loci)=split /\t/,$_;
-	my @locis = split /,/,$loci;
-	foreach (@locis){
-	    $hash{$_}{$ctg}=1;
-	}
+    	chomp;
+    	my (undef,$loci)=split /\t/,$_;
+    	my @locis = split /,/,$loci;
+    	foreach (@locis){
+    	    $hash{$_}{$ctg}=1;
+    	}
     }
     close IN;
+
 }
 
 open OUT, ">loci_samples_ordered_occurence.csv";
