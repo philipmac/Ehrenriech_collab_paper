@@ -1,0 +1,17 @@
+1) shuffle_all.pl 
+   uses read_1 and read_2 to create full length merged paired reads.
+
+2) fastq_to_fasta_all.pl 
+   converts fq to fa.
+
+3) down_sample__illum.pl
+   down samples the hi coverage data to look like the low coverage data
+   allowing us to compare like with like on assemblies. 
+
+4) velveth_all.pl
+   k being 31, and -shortPaired=1
+
+5) velvetg_all.pl 
+   to do.
+
+x) assemble the illum, and count the number of truncated 454 reads.
