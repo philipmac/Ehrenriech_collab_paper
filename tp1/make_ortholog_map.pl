@@ -1,3 +1,4 @@
+# parse all of the asn files in every strain to grab out locus / synonym info
 
 use warnings;
 use strict;
@@ -7,7 +8,7 @@ my $tagOnly=0;
 my $tag=0;
 my %NC_toLoc;
 
-open MAP, ">map";
+open MAP, ">derived_data/map";
 
 foreach my $dir(@dirs){
 
@@ -36,7 +37,7 @@ foreach my $dir(@dirs){
 
     my %geneInfo;
     foreach my $asn(@asns){
-#	next unless $asn =~ /NC_011748/; #NC_017626
+#	next unless $asn =~ /NC_017626/; #NC_011748
 #	next unless $asn =~ /NC_000913/;
 	my %info;
 

@@ -1,7 +1,7 @@
 # the idea is we want to generate some unique tag for each gene, small as possible. 
-# starters will take head and tail, both compliment
+# take head and tail, both strands
 
-# just use one genome for the time being, the others are getting tin the way
+# just use one genome for the time being, the others are getting in the way
 use strict;
 use warnings;
 
@@ -10,7 +10,7 @@ use warnings;
 my %dialignMap;
 my %allTags;
 
-open IN, 'GENE_ALIGNMENT_GOOD' or die $!;
+open IN, 'derived_data/GENE_ALIGNMENT_GOOD' or die $!;
 while (<IN>){
 
     # gi_260853213_ref_NC_013361.1_1603601_1607077

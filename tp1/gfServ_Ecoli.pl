@@ -1,9 +1,11 @@
+# this inits all of the blat servers and records what port they are all running on in port_to_Ecoli
+
 use strict;
 use warnings;
 
 my @strains = `ls ../ECO_ALL`;
 
-open OUT , ">port_to_Ecoli" or die $!;
+open OUT , ">derived_data/port_to_Ecoli" or die $!;
 
 my $hostNum = 80080;		# start at this port, and go up.
 

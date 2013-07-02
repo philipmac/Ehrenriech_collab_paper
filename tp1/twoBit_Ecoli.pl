@@ -1,3 +1,5 @@
+# simply index the fa files found within ECO_ALL
+
 #!/usr/bin/perl -w
 use strict;
 

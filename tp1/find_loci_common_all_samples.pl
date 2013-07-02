@@ -1,4 +1,4 @@
-# this script just gets the loci and orders them by count over sample
+# this gets the loci and orders them by count over sample
 # some cutoff can then be applied to the output file for 'common to all' sets and so on.
 
 use warnings;
@@ -25,7 +25,7 @@ foreach my $file (@files){
 
 }
 
-open OUT, ">loci_samples_ordered_occurence.csv";
+open OUT, ">derived_data/loci_samples_ordered_occurence.csv";
 foreach my $locus(sort {sk($b) <=> sk($a)} keys %hash){
     my %h=%{$hash{$locus}};
     my $numStrainsLocusSeen = scalar keys %h;

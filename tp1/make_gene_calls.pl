@@ -6,7 +6,7 @@ use strict;
 my $minHitLen = 90;
 
 my %geneToLocName;
-open IN, "map_withEcoGene" or die $!;
+open IN, "derived_data/map_withEcoGene" or die $!;
 while (<IN>){
     #Escherichia_coli_042_uid161985NC_017626336-2798LOCUSTAG: EC042_0001LOCUS: thrASYNS: ECOGENE: EG10998GENEID:
     my (undef,$plsmd,$location,undef,$locus,$syns,$ecogene,undef)=split /\t/,$_;

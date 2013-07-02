@@ -1,7 +1,9 @@
+# run a gfClient against the each strain for each sample
+
 use strict;
 use warnings;
 
-open (IN, "port_to_Ecoli") or die $!;
+open (IN, "derived_data/port_to_Ecoli") or die $!;
 my %eColiToPort;
 while (<IN>){
     chomp;

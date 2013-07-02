@@ -1,7 +1,11 @@
+# using Ian's file sample_indiv_type.csv
+# and my call of the neares strain
+# create an output file : top_picks_merged_with_Ian_work
+
 use warnings;
 use strict;
 
-open IN, "sample_indiv_type.csv" or die $!;
+open IN, "derived_data/sample_indiv_type.csv" or die $!;
 my %sampleToHostAndType;
 while (<IN>){
     chomp $_;
@@ -26,7 +30,7 @@ foreach my $contig (@contigs){
     $sortableHash{$contig}{LINE}= join "\t",($contig, $strain, $commonGenes, $sampleToHostAndType{$contig}{TYPE}, $sampleToHostAndType{$contig}{HOST},"\n");    
 }
 
-open OUT, ">top_picks_merged_with_Ian_work" or die $!;
+open OUT, ">derived_data/top_picks_merged_with_Ian_work" or die $!;
 print OUT join "\t",qw/barcode E_coli_strain_called num_genes_common type host/;
 print OUT "\n";
 foreach my $contigSet (sort {$sortableHash{$a}{STRAIN} cmp $sortableHash{$b}{STRAIN} } keys %sortableHash){

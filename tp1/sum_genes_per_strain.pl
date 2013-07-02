@@ -24,7 +24,7 @@ foreach my $contigSet (@contigSets){
     	$strainToNumHits{$strain}=$wcl;
     }
 
-    open OUT, ">gene_counts/$contigSet" or die $!;
+    open OUT, ">derived_data/gene_counts/$contigSet" or die $!;
     foreach (sort {$strainToNumHits{$b}<=>$strainToNumHits{$a}} (keys %strainToNumHits)){
     	print OUT $strainToNumHits{$_},"\t",$_,"\n";
     }
