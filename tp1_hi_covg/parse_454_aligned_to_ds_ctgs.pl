@@ -6,12 +6,15 @@
 # 2) the start of the match on the query is about the start of the query AND the end of the match is at the end of the contig
 # 3) the start of the match on the contig is about the start of the contig AND 454 (query) end is past the end of contig
 
+
 use strict;
 use warnings;
+use Statistics::Basic qw(:all);
 
-my @psls = `ls ../reads/*/*_ds_4k_31_covg_30/contigs_vrs_454.psl`;
+my @psls = `ls ~/e_reich/tp1_hi_covg/reads/*/*_ds_4k_31_covg_30/contigs_vrs_454.psl`;
 
 my $slop = 9;
+my @aves;
 
 foreach my $psl(@psls){
     chomp $psl;
@@ -33,13 +36,21 @@ foreach my $psl(@psls){
 
     my $well = $1 if ($psl =~ /reads\/(\w+)\//);
 
-    my $totalNumberfffs = `egrep ">" ~/e_reich_tp1_454/$well.fasta | wc -l`;
+    my $totalNumberfffs = `egrep ">" ~/e_reich/tp1_454/$well.fasta | wc -l`;
     chomp $totalNumberfffs;
 
     my $numOKCtgs = scalar (keys %fff_ok);
     my $pc = ($numOKCtgs/$totalNumberfffs)*100;
+    push @aves,$pc;
     print "For $well, $numOKCtgs OK Ctgs out of a total of $totalNumberfffs (";
     printf("%.2f", $pc);
     print "%)\n";
 }
 	
+my $v1  = vector(@aves);
+my $std = stddev($v1);
+print 'Mean :'.mean($v1)."\n"; 
+print "Stddev : $std\n";
+
+exit;
+
