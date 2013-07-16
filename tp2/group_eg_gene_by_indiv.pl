@@ -50,7 +50,7 @@ foreach my $file (@files){
     print $file,"\n" if $host eq '';
     while (<IN>){
 	chomp $_;
-	$host_to_ECO_genes{$host}{$_}=1
+	$host_to_ECO_genes{$host}{$_}++
     }
     close IN;
 }
@@ -58,8 +58,8 @@ foreach my $file (@files){
 
 foreach my $host (keys %host_to_ECO_genes){
     open OUT, ">derived_data/ECO_GENE_tp1_HOST.$host";
-    foreach (keys %{$host_to_ECO_genes{$host}}){
-	print OUT $_,"\n";
+    foreach (sort {$host_to_ECO_genes{$host}->{$b}<=>$host_to_ECO_genes{$host}->{$a}} keys %{$host_to_ECO_genes{$host}}){
+	print OUT $_,"\t",$host_to_ECO_genes{$host}->{$_},"\n";
     }
     close OUT;
 }
