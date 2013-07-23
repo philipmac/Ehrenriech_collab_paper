@@ -2,12 +2,14 @@
 use strict;
 use warnings;
 
-my @ones= `ls ../reads/*/1_*.fq`;
+my @ones= `ls /home/philip/e_reich/tp1_hi_covg/reads/*/1_*.fq`;
 foreach (@ones){
     chomp $_;
     my $two = $_;
-    $two =~ s/1_/2_/;
+    $two =~ s/\/1_/\/2_/;
     my $out = $_;
-    $out =~ s/1/merged/;
+    $out =~ s/\/1_/\/merged_/;
+    next if (-e $out);
     system "/usr/share/velvet/shuffleSequences_fasta.pl $_ $two $out";
 }
+

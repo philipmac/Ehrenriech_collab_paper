@@ -1,5 +1,3 @@
-#NOT RUN YET
-
 use strict;
 use warnings;
 
@@ -9,16 +7,17 @@ my %portToDir;
 while (<IN>){
     chomp;
     my ($sp,$prt) = split /\t/,$_;
-    my (undef, undef,$sample) = split /\//,$sp;
-    $eColiToPort{$sample}=$prt;
+    my (undef, undef,undef, undef,undef, undef, $wellName) = split /\//,$sp;
+    $eColiToPort{$wellName}=$prt;
+
     $sp =~ s/\.2bit//;
     $portToDir{$prt}=$sp;
 }
 close IN or warn $!;
 
 
-my @fffs = `ls ~/e_reich_tp1_454/*fasta`;
-my $fuckingBullshit = '.';
+my @fffs = `ls ~/e_reich/tp1_454/*fasta`;
+my $fuckingBullshit = '../../../../../../';
 
 foreach my $fff (@fffs){
     chomp  $fff;
@@ -30,9 +29,10 @@ foreach my $fff (@fffs){
 
     my $port = $eColiToPort{$wellName};
     next unless $port;
-    
+
     my $outFile = $portToDir{$eColiToPort{$wellName}}.'_vrs_454.psl';
 
+#    next if (-e $outFile);
     system "~/bin/x86_64-linux-gnu/gfClient localhost $port $fuckingBullshit $fff $outFile\n";
 }
 

@@ -4,9 +4,9 @@
 use strict;
 use warnings;
 
-system ("rm ../reads/F24/*ds*fa") if ($ARGV[0] && $ARGV[0] =~ /clean/);
+system ("rm ../reads/*/*ds*fa") if ($ARGV[0] && $ARGV[0] =~ /clean/);
 
-my @filesToDS=`ls ../reads/*/*fa`;
+my @filesToDS=`ls ~/e_reich/tp1_hi_covg/reads/*/*fa`;
 my $mod = 4;
 
 
@@ -17,9 +17,9 @@ foreach my $fa (@filesToDS){
     
     my $outFile = $fa;
     $outFile =~ s/\.fa/_ds_$mod\.fa/;
+    next if (-e $outFile);
     open OUT, ">", $outFile or die $!;
-    # print $outFile;
-    # exit;
+
     my $ok=0;
     my $counter=0;
     while (<IN>){

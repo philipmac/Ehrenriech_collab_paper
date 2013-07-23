@@ -1,9 +1,9 @@
-# index the down sampled fa files
+# index the full coverage fa files
 
 use warnings;
 use strict;
 
-my @files = `ls ~/e_reich/tp1_hi_covg/reads/*/*_ds_4k_31_covg_30/contigs.fa`;
+my @files = `ls ~/e_reich/tp1_hi_covg/reads/*/*k_57_covg_100/contigs.fa`;
 
 foreach my $file(@files){
     chomp $file;

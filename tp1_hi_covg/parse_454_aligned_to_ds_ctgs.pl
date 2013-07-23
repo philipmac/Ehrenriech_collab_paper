@@ -14,7 +14,12 @@ use Statistics::Basic qw(:all);
 my @psls = `ls ~/e_reich/tp1_hi_covg/reads/*/*_ds_4k_31_covg_30/contigs_vrs_454.psl`;
 
 my $slop = 9;
+#my $max_gap = 10;
+my $min_align_len = 50;
+my $min_pc_match = 90;
 my @aves;
+
+my @linesUsed;			# going to push on anything from the blat file I use here to get stats for paper.
 
 foreach my $psl(@psls){
     chomp $psl;
@@ -24,13 +29,43 @@ foreach my $psl(@psls){
     while (<IN>){
 	next unless $_ =~ /^\d/;
 	my @l = split/\t/,$_;
+	my ($qgap, $tgap) = ($l[5], $l[7]);
+#	next if ($qgap > 10 || $tgap > 10);
+
+	my $blockSize = $l[$#l-2];
+	$blockSize =~ s/,$//;
+	my @blockSizes = split ',', $blockSize;
+#	my $skip=1;
+	my $totSize=0;
+	foreach (@blockSizes){
+	    $totSize += $_;
+#	    $skip=0 if $_>$min_align_len;
+	}
+#	next if $skip;
 	my ($fff,$qSize,$qStart,$qStop)=@l[9..12];
 	my ($tSize,$tStart,$tStop)=@l[14..16];
-	my $matchLenOnTarget = $tStop-$tStart;
-	my $matchLenOnQ = $qStop-$qStart;
-	$fff_ok{$fff} = 1 if ($matchLenOnQ+$slop >= $qSize) && (abs($matchLenOnTarget-$matchLenOnQ)<=$slop); # if the whole thing is in the contig
-	$fff_ok{$fff} = 1 if (($qStart<$slop) && (($tStop+$slop)>=$tSize) ); # if the qstart is near the start of itself, & it runs out
-	$fff_ok{$fff} = 1 if (($tStart<=$slop) && (($qStop+$slop)>=$qSize) ); # runs off the end of the 454
+
+	my $matchLenOnTarget = $tStop-$tStart; # ie contig
+	my $matchLenOnQ = $qStop-$qStart;      # ie 454
+
+	my ($s,$l) = sort {$a <=> $b} ($matchLenOnTarget,$matchLenOnQ);
+	my $pc_match = ($s/$l)*100;
+	next if $pc_match < $min_pc_match;
+	# if the whole thing is in the contig
+	# if the qstart is near the start of itself, & it runs out
+	# runs off the end of the 454
+	if ( ($matchLenOnQ+$slop >= $qSize) && (abs($matchLenOnTarget-$matchLenOnQ)<=$slop)){
+	    push @linesUsed,$_;
+	    $fff_ok{$fff} = 1;
+	}
+	     
+	elsif ( ($qStart<$slop) && (($tStop+$slop)>=$tSize) ||
+		($tStart<=$slop) && (($qStop+$slop)>=$qSize) ){
+	    next if ($matchLenOnTarget < $min_align_len);
+	    next if ($matchLenOnQ < $min_align_len);
+	    push @linesUsed,$_;
+	    $fff_ok{$fff} = 1;	    
+	}
     }
     close IN;
 
@@ -45,6 +80,7 @@ foreach my $psl(@psls){
     print "For $well, $numOKCtgs OK Ctgs out of a total of $totalNumberfffs (";
     printf("%.2f", $pc);
     print "%)\n";
+#    last;
 }
 	
 my $v1  = vector(@aves);
@@ -52,5 +88,8 @@ my $std = stddev($v1);
 print 'Mean :'.mean($v1)."\n"; 
 print "Stddev : $std\n";
 
-exit;
+open OUT, ">LINES_USED" or die $!;
+print OUT join "\n", @linesUsed;
+close OUT;
+
 

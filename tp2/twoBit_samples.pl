@@ -1,9 +1,7 @@
-# index the down sampled fa files
-
-use warnings;
+#!/usr/bin/perl -w
 use strict;
 
-my @files = `ls ~/e_reich/tp1_hi_covg/reads/*/*_ds_4k_31_covg_30/contigs.fa`;
+my @files = `ls ~/e_reich/tp2/reads/*/k_31_covg_30/contigs.fa`;
 
 foreach my $file(@files){
     chomp $file;
@@ -11,4 +9,5 @@ foreach my $file(@files){
     $outFile =~ s/fa$/2bit/;
     next if (-e $outFile);
     system "~/bin/x86_64-linux-gnu/faToTwoBit $file $outFile";
+
 }

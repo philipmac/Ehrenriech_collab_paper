@@ -2,8 +2,8 @@
 
 use strict;
 use warnings;
-my $root = '';
-my @samples = `ls ~/e_reich/tp1_hi_covg/reads/*/*_ds_4k_31_covg_30/contigs.2bit`;
+
+my @samples = `ls ~/e_reich/tp1_hi_covg/reads/*/*k_57_covg_100/contigs.2bit`;
 
 open OUT , ">derived_data/port_to_contig" or die $!;
 
