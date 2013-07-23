@@ -1,3 +1,9 @@
+= tag_genes.pl = 
+find the cutoff len (out put of this file is tags dir, var tag len, vary strain.)
+
+= make_gene_calls.pl =
+apply the cutoff len (this works on a summarized blat output...)
+
 
 other/sample_indiv_type.csv is from Ian. I will extend this file with gene count / sp calling data.
 
@@ -8,3 +14,31 @@ does two things: it picks the top counting E coli sp
 all_hits.tgz is a list of all of the genes that each contig set contains (from every NCBI sp).
 
  lists the top 10 scoring E coli's genes found in every contig set
+
+= grouping genes =
+
+we want to build up some sets to find out which genes dominate which individual, and how that changes over time
+or how that changes between individual.
+
+step 1) want to make sets like :
+tp1.barcode1 {a,b,c}  	  (indiv 1)
+tp1.barcode2 {a,b,c}	  (indiv 1)
+tp1.barcode3 {a,b,e}	  (indiv 1)
+tp1.barcode3 {b,c,d}	  (indiv 2)
+tp1.barcode3 {b,c,e}	  (indiv 2)
+tp1.barcode3 {b,c,f}	  (indiv 3)
+
+step 2) want to work out the fraction of samples PER INDIVIDUAL every gene occurs.
+tp1.indiv1{ a=>3/3=1.0, 
+	    b=>3/3,
+	    c=>2/3,
+	    e=>1/3 }
+tp1.indiv2{ b=>1,c=>1,d=>1/2,e=>1/2 }
+
+step 3) get the deltas.
+tp1.indiv1{ a=>(1-0)=1, 
+	    b=>(1-1)=0,
+	    c=>(2/3-1)=-0.33,
+	    d=>(0-1/3)=-0.33,
+	    e=>(1/3-1/3)=0,
+	    f=>(0-1/3)=-1/3 }
