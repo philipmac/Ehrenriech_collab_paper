@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-
+# checked, no need for change after naming mixup.
 my @files = `ls ../scratch/*.fa`;
 
 foreach my $file (@files){
