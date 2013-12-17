@@ -1,45 +1,35 @@
 # aiming here to categorise the alignments. 
-# Homo sapiens
-# Escherichia coli O55:H7 str.
-# phage
-# Culex quinquefasciatus <-- mosquito??
-# CRISPR
 
 use strict;
 use warnings;
 
-my @tps = qw (tp1_454 tp1_ds tp1_hi_covg tp1 tp2);
-
-
-
-foreach my $tp (@tps){
-    my @summaries = `ls data/blast_output/$tp.summary*`;
-    my %samples_seen;		# want to make sure that every sample has been seen
-    foreach my $summary (@summaries){
-	chomp $summary;
-	open IN, $summary or die $!;
-	my %count;
-	while (<IN>){
-	    next unless $_ =~ /^\d/;
-	    my @a = split /\t/;
-	    $count{$a[0]}=1;	# a[0] is the sample number
-	    $samples_seen{$a[0]}=1;
-	}
-	close IN;
-
-	$summary =~ s/data\/blast_output\///;
-	print $summary, "\t",  scalar keys %count, "\n";
+my @summaries = `ls data/*.summary`;
+my %samples_seen;		# want to make sure that every sample has been seen
+foreach my $summary (@summaries){
+    chomp $summary;
+    open IN, $summary or die $!;
+    my %count;
+    while (<IN>){
+	next unless $_ =~ /^spacer/;
+	my @a = split /\t/;
+	$count{$a[0]}=1;	# a[0] is the sample number
+	$samples_seen{$a[0]}=1;
     }
-
-    # flip through the samples seen to make sure they are continious
-    my $i = 0;
-    while($i < scalar keys %samples_seen){
-	$i++;
-	next if defined $samples_seen{$i};
-	print "Missing $i from $tp!!\n";
-    }
-    print  "$i in $tp :)\n\n";
+    close IN;
+    
+    $summary =~ s/data\/blast_output\///;
+    print $summary, "\t",  scalar keys %count, "\n";
 }
+
+# # flip through the samples seen to make sure they are continious
+my $i = 0;
+while($i < scalar keys %samples_seen){
+    $i++;
+    next if defined $samples_seen{"spacer_$i"};
+    print "Missing $i !!\n";
+}
+print  "$i in total :)\n\n";
+
 
 exit;
 

@@ -3,112 +3,95 @@
 
 use strict;
 use warnings;
+use Eco;
 
-# my $s = '84.tp_1';
-# my @as = split /\./,$s;
-# print @as;
-# exit;
-my @tps = `ls data/blast_output/*.out`;
-system "rm data/blast_output/*.summary*";
+#system "rm data/blast_output/*.summary*";
 
-foreach my $file (@tps){
+my %head_to_seq = %{load_FA('../crispr/data/spacers_uniq.fa')}; # this loads up the original spacers, I need this because some things have zero hits, so I want to make sure I know what I went looking for.
 
-    chomp $file;
-    my $tp = $1 if $file =~ /\/(\w+)\.out/;
+my %query_to_e_val = %{do_parse('../crispr/data/blast_output/spacers_uniq.blast.txt')}; # this looks through the BLAST summary, and pulls out intersting things
 
-    die "no tp for $file" if !$tp;
+my %sample_has_good_coli_crispr;
+my %sample_has_poor_coli_crispr;
+my %sample_has_other_crispr;
+my %sample_has_no_crispr;
 
-    my %head_to_seq = %{load_seq([`ls spacers_uniq.$tp.fa`])}; # this loads up the original spacers
+my $max=0;
+foreach my $sample (sort keys %query_to_e_val){
+    my (undef,$sampleNo)= split /_/,$sample;
 
-    my %query_to_e_val = %{do_parse($file)}; # this looks through the BLAST summary, and pulls out intersting things
-    
-    my %sample_has_good_coli_crispr;
-    my %sample_has_poor_coli_crispr;
-    my %sample_has_other_crispr;
-    my %sample_has_no_crispr;
+    $max=$sampleNo if $max<$sampleNo;
 
-    my $max=0;
-    foreach my $sample ( keys %query_to_e_val){
-	my ($sampleNo,$tp)= split /\./,$sample;
+    foreach (keys %{$query_to_e_val{$sample}}){
+	next if $sample_has_good_coli_crispr{$sample};
 
-	$max=$sampleNo if $max<$sampleNo;
-
-	foreach (keys %{$query_to_e_val{$sample}}){
-
-	    if ( $_ =~ /crispr/i ){
-		if ($_ =~ /coli/i) {
-		    if ($query_to_e_val{$sample}->{$_} =~ /e/)  {
-			$sample_has_good_coli_crispr{$sampleNo}=1;
-		    }
-		    else{
-			$sample_has_poor_coli_crispr{$sampleNo}=1;
-		    }
-		}		
-		else{
-		    $sample_has_other_crispr{$sampleNo}=1;
+	if ( $_ =~ /crispr/i ){
+	    if ($_ =~ /coli/i) {
+		if ($query_to_e_val{$sample}->{$_} =~ /e/)  { # this means that anything that has a value of >0.001 is denoted as "poor" (below)
+		    $sample_has_good_coli_crispr{$sample}=1;
 		}
+		else{
+		    $sample_has_poor_coli_crispr{$sample}=1;
+		}
+	    }		
+	    else{
+		$sample_has_other_crispr{$sample}=1;
 	    }
 	}
-
-	unless($sample_has_good_coli_crispr{$sampleNo} || $sample_has_poor_coli_crispr{$sampleNo} || $sample_has_other_crispr{$sampleNo}){
-	    $sample_has_no_crispr{$sampleNo}=1
-	}
     }
 
-    print "Total number of uniq spacers in $tp is: $max\n";
-
-    # don't care about things that have good or ok existing coli crisprs, (<- unless there is something else v good there).
-    my $coli_crisprs = $file;
-    $coli_crisprs =~ s/\.out/\.summary_coli_crispr\.csv/;
-    my $col_head = join "\t", ('int','Description','e-value','spacer',"\n");
-    open COLI_CRISPRS, ">$coli_crisprs" or die $!;
-    print COLI_CRISPRS $col_head;
-
-    my $other_crispr = $file;
-    $other_crispr =~ s/\.out/\.summary_other_crispr\.csv/;    
-    open OTHER_CRISPR, ">$other_crispr" or die $!;
-    print OTHER_CRISPR $col_head;
-
-    my $no_crispr = $file;
-    $no_crispr =~ s/\.out/\.summary_no_crispr\.csv/;
-    open NO_CRISPR, ">$no_crispr" or die $!;
-    print NO_CRISPR $col_head;
-
-    my $nothing = $file;
-    $nothing =~ s/\.out/\.summary_nothing\.csv/;
-    open NOTHING, ">$nothing" or die $!;
-    print NOTHING $col_head;
-    
-    foreach my $sample (1..$max){
-
-	die "no spacer sequence for $sample , $file, $tp\n" if !defined $head_to_seq{"$sample.$tp"};
-
-	my @lines;
-	foreach (keys %{$query_to_e_val{"$sample.$tp"}}){
-	    my $line = join "\t",( $sample,$_ ,$query_to_e_val{"$sample.$tp"}->{$_}, $head_to_seq{"$sample.$tp"});
-	    push @lines,$line;
-	}
-	push @lines,"\n";
-
-	if($sample_has_good_coli_crispr{$sample} || $sample_has_poor_coli_crispr{$sample}){
-	    print COLI_CRISPRS join "\n", @lines
-	}
-	elsif($sample_has_other_crispr{$sample}){
-	    print OTHER_CRISPR join "\n", @lines
-	}
-	elsif ($sample_has_no_crispr{$sample}){
-	    print NO_CRISPR join "\n", @lines
-	}
-	else{
-	    print NOTHING join "\t",($sample,"Nothing", $head_to_seq{"$sample.$tp"},"\n")
-	}
+    unless($sample_has_good_coli_crispr{$sample} || $sample_has_poor_coli_crispr{$sample} || $sample_has_other_crispr{$sample}){
+	$sample_has_no_crispr{$sample}=1
     }
-
-    close NO_CRISPR;
-    close OTHER_CRISPR;
-    close COLI_CRISPRS;
-    close NOTHING;
 }
+
+# don't care about things that have good or ok existing coli crisprs, (<- unless there is something else v good there).
+my $col_head = join "\t", ('int','Description','e-value','spacer');
+$col_head .="\n";
+
+open COLI_CRISPRS, ">data/coli_crisprs.summary" or die $!;
+print COLI_CRISPRS $col_head;
+
+open OTHER_CRISPR, ">data/other_crispr.summary" or die $!;
+print OTHER_CRISPR $col_head;
+
+open NO_CRISPR, ">data/no_crispr.summary" or die $!;
+print NO_CRISPR $col_head;
+
+open NOTHING, ">data/nothing_crispr.summary" or die $!;
+print NOTHING $col_head;
+
+foreach my $sample (1..$max){
+
+    my $name = 'spacer_'.$sample;
+    die "no spacer sequence for $sample\n" if !defined $head_to_seq{">$name"};
+
+    my @lines;
+    foreach (keys %{$query_to_e_val{$name}}){
+	my $line = join "\t",( $name,$_ ,$query_to_e_val{$name}->{$_}, $head_to_seq{">$name"});
+	push @lines,$line;
+    }
+    push @lines,"\n";
+
+    if($sample_has_good_coli_crispr{$name} || $sample_has_poor_coli_crispr{$name}){
+	print COLI_CRISPRS join "\n", @lines
+    }
+    elsif($sample_has_other_crispr{$name}){
+	print OTHER_CRISPR join "\n", @lines
+    }
+    elsif ($sample_has_no_crispr{$name}){
+	print NO_CRISPR join "\n", @lines
+    }
+    else{
+	print NOTHING join "\t",($name,"Nothing", $head_to_seq{">$name"},"\n")
+    }
+}
+
+close NO_CRISPR;
+close OTHER_CRISPR;
+close COLI_CRISPRS;
+close NOTHING;
+
 
 
 # >gb|JF495910.1| Escherichia coli strain R209 CRISPR1 repeat region
@@ -154,26 +137,4 @@ sub do_parse{
     }
     die "Something went wrong with loading $file\n" if scalar keys %ret == 0;
     return \%ret;
-}
-
-sub load_seq{
-    my @files = @{$_[0]};
-    my %head_to_seq;
-    foreach my $file (@files){
-        open IN, $file or die $!;
-        my $lh;
-        
-        while (<IN>){
-            chomp $_;
-            next if $_ =~ /^\s*$/;
-            if ($_ =~ s/^>//){
-                $lh = $_;
-            }
-            else {
-                $head_to_seq{$lh}=$_;
-            }
-        }
-        close IN;
-    }
-    return \%head_to_seq;
 }
