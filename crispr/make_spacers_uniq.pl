@@ -3,51 +3,37 @@
 
 use warnings;
 use strict;
+use Eco;
 
-print_uniq(load_seq([`ls /home/philip/e_reich/tp1/reads/*_31/bowtie_index/spacers.fa`]),'tp1');
-print_uniq(load_seq([`ls /home/philip/e_reich/tp2/reads/*/k_31_covg_30/bowtie_index/spacers.fa`]),'tp2');
-print_uniq(load_seq([`ls /home/philip/e_reich/tp1_454/*bowtie_index/spacers.fa`]), 'tp1_454');
-print_uniq(load_seq([`ls /home/philip/e_reich/tp1_hi_covg/reads/*/*_ds_4k_31_covg_30/bowtie_index/spacers.fa`]), 'tp1_ds');
-print_uniq(load_seq([`ls /home/philip/e_reich/tp1_hi_covg/reads/*/*k_57_covg_100/bowtie_index/spacers.fa`]), 'tp1_hi_covg');
+my %spacers = %{load_FA('../crispr/data/cat_spacers_in_study.fa')};
 
-sub load_seq{
-    my @files = @{$_[0]};
-    my %head_to_seq;
-    foreach my $file (@files){
-	open IN, $file or die $!;
-	my $lh;
-	
-	while (<IN>){
-	    chomp $_;
-	    next if $_ =~ /^\s*$/;
-	    if ($_ =~ s/^>//){
-		$lh = $_;
-	    }
-	    else {
-		$head_to_seq{$lh}=$_;
-	    }
-	}
-	close IN;
-    }
-    return \%head_to_seq;
-}
+print_uniq(\%spacers);
+
+exit;
+
 
 sub print_uniq{
     my %head_to_seq = %{$_[0]};
-    my $tp = $_[1];
-
     my %seq_to_head = reverse %head_to_seq;
 
     my $i = 1;
-    my %seen;
-    open OUT, ">spacers_uniq.$tp.fa" or die $!;
-    foreach (keys %seq_to_head){
-	next if $seen{$_};
-	$seen{$_}=1;
-	print OUT ">$i.$tp\n$_\n";
+    my %mapper;
+    open OUT, ">spacers_uniq.fa" or die $!;
+    foreach my $spacer_seq (keys %seq_to_head){
+	print OUT ">spacer_$i\n$spacer_seq\n";
+	foreach (keys %head_to_seq){
+	    $mapper{$_} = $i if $head_to_seq{$_} eq $spacer_seq;
+	}
 	$i++;
     }
     close OUT;
+
+    open MAP, ">spacers_map.txt" or die $!;
+    foreach (sort keys %mapper){
+	print MAP $_.'=>'.$mapper{$_}."\n";
+    }
+    close MAP;
+
 }
 
 
