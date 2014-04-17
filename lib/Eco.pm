@@ -3,6 +3,9 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw (
+get_coli_name_from_file
+strip_blat_cols
+make_plasmid_loc_to_locus
 rm_EC
 load_plate_letters_to_int 
 load_ECO_genes_by_bc 
@@ -22,13 +25,89 @@ intersection_keys
 union_keys
 );
 
-@EXPORT_OK = qw (%letter_to_name %name_to_letter);
+@EXPORT_OK = qw (%letter_to_name %name_to_letter $minHitLen);
 
 use strict;
 use warnings;
 
 our %letter_to_name = (F=>'FABIAN', I=>'IAN', J=>'JOSH', L=>'LILY', S=>'SEANA');
 our %name_to_letter = reverse %letter_to_name;
+our $minHitLen = 90;
+
+sub get_coli_name_from_file{
+    my $file_name = $_[0];
+    chomp $file_name;
+    if ($file_name =~ /(Escherichia_coli_.*)\.csv/){
+	return $1;
+    }
+    else{
+	die "There's a problem getting the name from $file_name\nQuitting\n";
+    }
+}
+
+sub make_plasmid_loc_to_locus{
+    my %geneToLocName;
+    open IN, "derived_data/map_withEcoGene" or die $!;
+    while (<IN>){
+	#Escherichia_coli_042_uid161985NC_017626336-2798LOCUSTAG: EC042_0001LOCUS: thrASYNS: ECOGENE: EG10998GENEID:
+	my (undef,$plsmd,$location,undef,$locus,$syns,$ecogene,undef)=split /\t/,$_;
+	$locus =~ s/LOCUS:|\s+//g;
+	$syns =~ s/SYNS:|\s+//g;
+	
+	$geneToLocName{"$plsmd,$location"}=$locus;
+	if ($syns ne ''){
+	    $geneToLocName{"$plsmd,$location"}.=','.$syns;
+	}    
+    }
+    close IN;
+    return \%geneToLocName;
+}
+
+sub strip_blat_cols{
+# runs through the psl output of blat, and prunes off the stuff we're not interested in. 
+# outputs a csv file.
+
+    my @psl_files = @{$_[0]};
+
+    foreach my $file (@psl_files){
+	chomp $file;
+
+	open IN, $file or die $!;
+
+	my $outFile = $file;
+	$outFile =~ s/\.psl/\.csv/;
+	open OUT, ">$outFile" or die $!;
+
+	while (<IN>){
+	    chomp;
+	    next unless $_ =~ /^\d/;
+	    my @a = split /\t/,$_;
+	    my $faHeader = $a[13];
+	    my @b = split /\|/,$faHeader;
+	    my $nc_name = $b[$#b-1];
+	    my $loc = $b[$#b];
+	    $loc =~ s/://;
+
+	    my $geneLen=$a[10];
+	    foreach ($a[$#a-2],$a[$#a-1],$a[$#a]){ # rms trailing commas from some fields where we dont want them
+		$_=~ s/,$//;
+	    }
+	    my @blockSizes = split /,/,$a[$#a-2];
+	    my $lens = join ',',@blockSizes;
+
+	    my @starts = split /,/,$a[$#a];
+	    my $startAsString = join ',',@starts;
+	    my $strand = $a[8];
+	    print OUT join "\t",($nc_name,$loc,$geneLen,$lens,$startAsString,$strand);
+	    print OUT "\n";
+	    
+	}
+	close IN;
+	close OUT;
+	# print $file;
+	# last;
+    }
+}
 
 sub union_keys{
     my ($h1,$h2) = ($_[0],$_[1]);
