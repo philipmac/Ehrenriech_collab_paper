@@ -1,3 +1,11 @@
+blat_align_contigs_to_Ecoli.pl
+
+make_blat_summary.pl
+
+make_gene_calls.pl
+
+
+
 = tag_genes.pl = 
 find the cutoff len (out put of this file is tags dir, var tag len, vary strain.)
 
