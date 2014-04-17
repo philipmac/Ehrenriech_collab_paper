@@ -2,33 +2,13 @@
 
 use warnings;
 use strict;
+use Eco;
 
-my $minHitLen = 90;
+my %geneToLocName = %{make_plasmid_loc_to_locus()};
 
-my %geneToLocName;
-open IN, "derived_data/map_withEcoGene" or die $!;
-while (<IN>){
-    #Escherichia_coli_042_uid161985NC_017626336-2798LOCUSTAG: EC042_0001LOCUS: thrASYNS: ECOGENE: EG10998GENEID:
-    my (undef,$plsmd,$location,undef,$locus,$syns,$ecogene,undef)=split /\t/,$_;
-    $locus =~ s/LOCUS:|\s+//g;
-    $syns =~ s/SYNS:|\s+//g;
-    
-    $geneToLocName{"$plsmd,$location"}=$locus;
-    if ($syns ne ''){
-	$geneToLocName{"$plsmd,$location"}.=','.$syns;
-    }    
-}
-close IN;
-
-# foreach (keys %geneToLocName){
-#     print "$_, $geneToLocName{$_},\n";
-# }
-# exit;
-
-foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_coli*`){ # (gene geneLen hitLens hitLocationOnGene strand)
+foreach my $file (`ls ~/e_reich/tp1/reads/*_31/blat/Escherichia_coli*.csv`){ # (gene geneLen hitLens hitLocationOnGene strand)
     my (%startHitButTooShort, %endHitButTooShort, %isLongHit);
     my %genesHit;
-#    my %allGenes;
 
     chomp $file;
     open IN, $file or die $!;
@@ -38,9 +18,8 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
     $geneCallDir .= 'blat/gene_calls'; # each sample will have its own gene calls dir
     system "mkdir $geneCallDir" unless -d $geneCallDir;
 
-    my $outFile = $file;
-    $outFile =~ s/summary/gene_calls/; 
-    $outFile .='.csv';
+    my $coli_name = get_coli_name_from_file($file);
+    my $outFile = $geneCallDir.'/'.$coli_name.'.csv';
 
     while (<IN>){
 	chomp $_;
@@ -61,7 +40,7 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
 	while (my ($index, $start) = each @starts) {
 	    my $end = $start + $lens[$index];
 
-	    if ($lens[$index] < $minHitLen){  # len is less than 90
+	    if ($lens[$index] < $Eco::minHitLen){  # len is less than 90
 		$startHitButTooShort{$gene}=1 if ($start =~ /0|1/);		
 		$endHitButTooShort{$gene}=1 if ($end == $geneLen || ($end == $geneLen-1));
 	    }
@@ -73,7 +52,7 @@ foreach my $file (`ls ~/e_reich_tp1/ecolireads/*_31/blat/summary/Escherichia_col
 
 	foreach (@lens){
 	    $genesHit{$gene}=1 if ($_ == $geneLen || $_+1 == $geneLen);
-	    $isLongHit{$gene}=1 if $_ > $minHitLen;
+	    $isLongHit{$gene}=1 if $_ > $Eco::minHitLen;
 	}
 
 	#$genesHit{$gene}=1 if $isLongHit{$gene} && ($endHitButTooShort{$gene} || $startHitButTooShort{$gene});
