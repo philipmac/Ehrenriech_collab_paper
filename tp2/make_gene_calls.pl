@@ -56,6 +56,7 @@ foreach my $file (`ls ../../tp2/reads/*/k_31_covg_30/blat/*.csv`){ # (gene geneL
 	# initial $minHitLen or 
 	# ultimate $minHitLen bp
 
+	# logic here is the gene is marked present if the start of the alignment lines up with the 
 	while (my ($index, $start) = each @starts) {
 	    my $end = $start + $lens[$index];
 
