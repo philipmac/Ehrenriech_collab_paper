@@ -1,44 +1,25 @@
 # now I'm going to run through the csv files (pruned versions of blat out) and make a call if the gene is present in the contig or not.
 use warnings;
 use strict;
+use Eco;
 
-my $minHitLen = 90;
-
-my %geneToLocName;
-open IN, "derived_data/map_withEcoGene" or die $!;
-while (<IN>){
-    #Escherichia_coli_042_uid161985NC_017626336-2798LOCUSTAG: EC042_0001LOCUS: thrASYNS: ECOGENE: EG10998GENEID:
-    my (undef,$plsmd,$location,undef,$locus,$syns,$ecogene,undef)=split /\t/,$_;
-    $locus =~ s/LOCUS:|\s+//g;
-    $syns =~ s/SYNS:|\s+//g;
-    
-    $geneToLocName{"$plsmd,$location"}=$locus;
-    if ($syns ne ''){
-	$geneToLocName{"$plsmd,$location"}.=','.$syns;
-    }    
-}
-close IN;
-
-# foreach (keys %geneToLocName){
-#     print "$_, $geneToLocName{$_},\n";
-# }
-# exit;
+my %geneToLocName = %{make_plasmid_loc_to_locus()};
 
 foreach my $file (`ls ../../tp2/reads/*/k_31_covg_30/blat/*.csv`){ # (gene geneLen hitLens hitLocationOnGene strand)
-    my (%startHitButTooShort, %endHitButTooShort, %isLongHit);
     my %genesHit;
-#    my %allGenes;
 
     chomp $file;
     open IN, $file or die $!;
 
     my $geneCallDir = $file;
     $geneCallDir =~ s/blat.*//;
-    $geneCallDir .= 'blat/\.gene_calls'; # each sample will have its own gene calls dir
+    $geneCallDir .= 'blat/gene_calls'; # each sample will have its own gene calls dir
     system "mkdir $geneCallDir" unless -d $geneCallDir;
 
-    my $outFile = $file;
-    $outFile =~ s/\.csv/gene_calls/; 
+    my $coli_name = get_coli_name_from_file($file);
+    my $outFile = $geneCallDir.'/'.$coli_name.'.csv';
+
+    my (%startHitButTooShort, %endHitButTooShort, %isLongHit);
 
     while (<IN>){
 	chomp $_;
@@ -60,7 +41,7 @@ foreach my $file (`ls ../../tp2/reads/*/k_31_covg_30/blat/*.csv`){ # (gene geneL
 	while (my ($index, $start) = each @starts) {
 	    my $end = $start + $lens[$index];
 
-	    if ($lens[$index] < $minHitLen){  # len is less than 90
+	    if ($lens[$index] < $Eco::minHitLen){  # len is less than 90
 		$startHitButTooShort{$gene}=1 if ($start =~ /0|1/);		
 		$endHitButTooShort{$gene}=1 if ($end == $geneLen || ($end == $geneLen-1));
 	    }
@@ -72,7 +53,7 @@ foreach my $file (`ls ../../tp2/reads/*/k_31_covg_30/blat/*.csv`){ # (gene geneL
 
 	foreach (@lens){
 	    $genesHit{$gene}=1 if ($_ == $geneLen || $_+1 == $geneLen);
-	    $isLongHit{$gene}=1 if $_ > $minHitLen;
+	    $isLongHit{$gene}=1 if $_ > $Eco::minHitLen;
 	}
 
 	#$genesHit{$gene}=1 if $isLongHit{$gene} && ($endHitButTooShort{$gene} || $startHitButTooShort{$gene});
@@ -88,7 +69,8 @@ foreach my $file (`ls ../../tp2/reads/*/k_31_covg_30/blat/*.csv`){ # (gene geneL
 	print OUT join "\t", ($_,$loc,"\n");
     }
     close OUT;
-    #print $outFile,"\n";
+    # print $outFile,"\n";
+    # exit;
 }
 
 # print "all: ",scalar (keys %allGenes), "\n";
