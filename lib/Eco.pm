@@ -3,6 +3,7 @@ require Exporter;
 
 @ISA = qw(Exporter);
 @EXPORT = qw (
+look_for_ecogenes_in
 get_coli_name_from_file
 strip_blat_cols
 make_plasmid_loc_to_locus
@@ -33,6 +34,46 @@ use warnings;
 our %letter_to_name = (F=>'FABIAN', I=>'IAN', J=>'JOSH', L=>'LILY', S=>'SEANA');
 our %name_to_letter = reverse %letter_to_name;
 our $minHitLen = 90;
+our %trad_to_eg;
+
+sub look_for_ecogenes_in{
+    my $file = $_[0];
+
+    load_EGname_to_Tradname() if scalar keys %Eco::trad_to_eg == 0;
+
+    my %ecogenes;
+
+    open IN, $file or die $!;
+    while (<IN>){
+    	chomp;
+	my @a=split /\t/,$_;
+    	
+	next if scalar @a == 1;
+
+	my @locis;
+	if ($a[1] =~ /,/) {@locis = split /,/,$a[1]}
+	else {push @locis, $a[1]}
+
+    	foreach (@locis){
+	    $ecogenes{$Eco::trad_to_eg{$_}}=1 if defined $Eco::trad_to_eg{$_};
+    	}
+    }
+    close IN;
+    return \%ecogenes;
+}
+
+sub load_EGname_to_Tradname{
+
+    open IN, "../tp1/derived_data/EGname_to_Tradname.csv" or die $!;
+    
+    while (<IN>){
+	chomp;
+	my ($eg,$trad) = split /\t/,$_;
+	$trad_to_eg{$trad}=$eg;
+    }
+    close IN;
+    
+}
 
 sub get_coli_name_from_file{
     my $file_name = $_[0];
